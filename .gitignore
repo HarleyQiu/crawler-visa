@@ -1,0 +1,41 @@
+# 忽略编译生成的可执行文件和库
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+
+# Go 工具生成的覆盖率工具文件
+*.out
+coverage.out
+
+# Go Modules 相关文件
+go.sum
+Gopkg.lock
+vendor/
+
+# Glide 工具相关文件（如果使用 Glide 管理依赖）
+.glide/
+
+# 日志文件
+*.log
+
+# JetBrains IDE（如 IntelliJ IDEA, GoLand 等）
+.idea/
+*.iml
+out/
+
+# 其他常见忽略项
+tmp/
+config/
+
+# MacOS 文件
+.DS_Store
+
+# Windows 文件
+Thumbs.db
+Desktop.ini
+
+# 配置文件
+.env
