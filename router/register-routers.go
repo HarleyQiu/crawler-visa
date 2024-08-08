@@ -1,7 +1,10 @@
 package router
 
-import "github.com/gorilla/mux"
+import (
+	"crawler-visa/controller"
+	"github.com/gorilla/mux"
+)
 
 var RegisterRouters = func(router *mux.Router) {
-
+	router.HandleFunc("/api/us-visa-status", controller.StatusCheck).Methods("POST")
 }
