@@ -7,5 +7,7 @@ type QueryUsStatus struct {
 }
 
 type UsStatus struct {
-	Status string `json:"status"`
+	Status      string `json:"status"`
+	Created     string `json:"created"`
+	LastUpdated string `json:"last_updated"`
 }

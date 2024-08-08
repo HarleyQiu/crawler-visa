@@ -8,8 +8,6 @@ import (
 	"net/http"
 )
 
-var status models.QueryUsStatus
-
 func StatusCheck(w http.ResponseWriter, r *http.Request) {
 	queryUsStatus := &models.QueryUsStatus{}
 	utils.ParseBody(r, queryUsStatus)
@@ -18,8 +16,7 @@ func StatusCheck(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	usStatus := &models.UsStatus{Status: applicationCheck}
-	res, _ := json.Marshal(usStatus)
+	res, _ := json.Marshal(applicationCheck)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(res)

@@ -18,6 +18,6 @@ func main() {
 	)
 	router.RegisterRouters(r)
 	//http.Handle("/", corsObj(r))
-	log.Println("Server is starting on localhost:9010...")
+	log.Println("Server is starting on 0.0.0.0:9010...")
 	log.Fatal(http.ListenAndServe("0.0.0.0:9010", corsObj(r)))
 }
