@@ -127,7 +127,7 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 	} else {
 		log.Println("发送成功")
 	}
-	time.Sleep(15 * time.Second)
+	time.Sleep(25 * time.Second)
 
 	c, err := client.DialTLS("imap.163.com:993", nil)
 	if err != nil {
