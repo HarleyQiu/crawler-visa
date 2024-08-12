@@ -181,9 +181,15 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 			}
 			header := mr.Header
 			if received, err := header.Date(); err == nil {
-				loc, _ := time.LoadLocation("Asia/Shanghai")
+				loc, err := time.LoadLocation("Asia/Shanghai")
+				if err != nil {
+					fmt.Println("加载时区失败, 使用 UTC 时区:", err)
+					loc = time.UTC
+				}
 				receivedInGMT8 := received.In(loc)
 				fmt.Println("收件时间:", receivedInGMT8)
+			} else {
+				fmt.Println("读取邮件时间失败:", err)
 			}
 			// 打印邮件正文
 			for {
