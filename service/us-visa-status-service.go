@@ -70,7 +70,7 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 		chromedp.WaitVisible(visaAppTypeSelector, chromedp.ByID),
 		chromedp.SetValue(visaAppTypeSelector, `NIV`, chromedp.ByID),
 		chromedp.WaitVisible(locationDropdown, chromedp.ByID),
-		chromedp.SetValue(locationDropdown, `BEJ`, chromedp.ByID),
+		chromedp.SetValue(locationDropdown, usStatus.Location, chromedp.ByID),
 		chromedp.WaitVisible(caseNumberInput, chromedp.ByID),
 		chromedp.SetValue(caseNumberInput, usStatus.ApplicationID, chromedp.ByID),
 		chromedp.WaitVisible(passportNumberInput, chromedp.ByID),

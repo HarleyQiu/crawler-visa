@@ -12,6 +12,7 @@ func StatusCheck(w http.ResponseWriter, r *http.Request) {
 	queryUsStatus := &models.QueryUsStatus{}
 	utils.ParseBody(r, queryUsStatus)
 	applicationCheck, err := service.RunVisaStatusCheck(queryUsStatus)
+	applicationCheck.Code = 200
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -26,6 +27,7 @@ func EmailTracking(w http.ResponseWriter, r *http.Request) {
 	queryUsStatus := &models.QueryUsStatus{}
 	utils.ParseBody(r, queryUsStatus)
 	applicationCheck, err := service.RunVisaEmailTracking(queryUsStatus)
+	applicationCheck.Code = 200
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
