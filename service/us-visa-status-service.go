@@ -55,6 +55,8 @@ func RunVisaStatusCheck(usStatus *models.QueryUsStatus) (models.UsStatus, error)
 }
 
 func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsStatus) (models.UsStatus, error) {
+	log.Printf("Performing visa status check, Location: %s, Application ID: %s, Passport Number: %s, Surname Initials: %s\n",
+		usStatus.Location, usStatus.ApplicationID, usStatus.PassportNumber, usStatus.First5LettersOfSurname)
 	var usStatusResult models.UsStatus
 
 	if err := godotenv.Load(".env"); err != nil {
