@@ -28,6 +28,8 @@ const (
 	surnameInput        = `#Surname`
 	captchaInput        = `#Captcha`
 	statusTranslation   = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_pTranslation`
+	statusMessage       = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblMessage`
+	statusContent       = `.ceac-status-content`
 	submitDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblSubmitDate`
 	statusDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblStatusDate`
 	captchaImage        = `#c_status_ctl00_contentplaceholder1_defaultcaptcha_CaptchaImage`
@@ -66,25 +68,32 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 	client := utils.ChaoJiYing{}
 	client.InitWithOptions()
 
+	log.Println("开始填写签证状态查询表单")
 	var imageBuf []byte
 	if err := chromedp.Run(taskCtx,
 		chromedp.Navigate("https://ceac.state.gov/CEACStatTracker/Status.aspx"),
 		chromedp.WaitVisible(visaAppTypeSelector, chromedp.ByID),
 		chromedp.SetValue(visaAppTypeSelector, `NIV`, chromedp.ByID),
+		// 领区
 		chromedp.WaitVisible(locationDropdown, chromedp.ByID),
 		chromedp.SetValue(locationDropdown, usStatus.Location, chromedp.ByID),
+		// 申请号
 		chromedp.WaitVisible(caseNumberInput, chromedp.ByID),
 		chromedp.SetValue(caseNumberInput, usStatus.ApplicationID, chromedp.ByID),
+		// 护照号
 		chromedp.WaitVisible(passportNumberInput, chromedp.ByID),
 		chromedp.SetValue(passportNumberInput, usStatus.PassportNumber, chromedp.ByID),
+		// 姓氏首字母 前五个字母
 		chromedp.WaitVisible(surnameInput, chromedp.ByID),
 		chromedp.SetValue(surnameInput, usStatus.First5LettersOfSurname, chromedp.ByID),
+		// 拿到验证码图片
 		chromedp.WaitVisible(captchaImage, chromedp.ByQuery),
 		chromedp.Screenshot(captchaImage, &imageBuf, chromedp.NodeVisible),
 	); err != nil {
 		return usStatusResult, err
 	}
 
+	log.Println("开始识别验证码")
 	if err := ioutil.WriteFile("captcha.png", imageBuf, 0644); err != nil {
 		return usStatusResult, err
 	}
@@ -101,12 +110,13 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 		return usStatusResult, fmt.Errorf("failed to get captcha value: %w", err)
 	}
 
+	log.Println("验证码识别结果:", result.PicStr)
 	if err := chromedp.Run(taskCtx,
 		chromedp.WaitVisible(captchaInput, chromedp.ByID),
 		chromedp.SetValue(captchaInput, result.PicStr, chromedp.ByID),
 		chromedp.Click(folderButton, chromedp.ByID),
-		chromedp.WaitVisible(statusTranslation, chromedp.ByQuery),
-		chromedp.Text(statusTranslation, &usStatusResult.Status, chromedp.NodeVisible),
+		chromedp.WaitVisible(statusContent, chromedp.ByQuery),
+		chromedp.Text(statusContent, &usStatusResult.Status, chromedp.NodeVisible),
 		chromedp.Text(submitDate, &usStatusResult.Created, chromedp.NodeVisible),
 		chromedp.Text(statusDate, &usStatusResult.LastUpdated, chromedp.NodeVisible),
 	); err != nil {
