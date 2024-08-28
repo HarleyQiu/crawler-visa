@@ -3,26 +3,20 @@ package scheduler
 import (
 	"crawler-visa/models"
 	"crawler-visa/service"
+	"crawler-visa/utils"
 	"fmt"
 	"time"
 )
 
-func Corn() {
-	var queries []models.QueryUsStatus
+func RunScheduledTasks() {
+	queryLoader := utils.NewQueryLoader[models.QueryUsStatus]("configuration.json")
+	queries, err := queryLoader.LoadQueries()
+	if err != nil {
+		fmt.Printf("加载查询错误: %v\n", err)
+		return
+	}
 
-	queries = append(queries, models.QueryUsStatus{
-		Location:               "BEJ",
-		ApplicationID:          "AA00DJIS17",
-		PassportNumber:         "R1708298",
-		First5LettersOfSurname: "Zheng",
-	})
-
-	queries = append(queries, models.QueryUsStatus{
-		Location:               "BEJ",
-		ApplicationID:          "AA00DJIGNH",
-		PassportNumber:         "EJ5341909",
-		First5LettersOfSurname: "Zhang",
-	})
+	tracker := utils.NewStatusTracker[models.UsStatus]()
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Minute)
@@ -32,13 +26,17 @@ func Corn() {
 
 			for _, query := range queries {
 
-				fmt.Printf("%+v\n", query)
-				applicationCheck, err := service.RunVisaStatusCheck(&query)
-				applicationCheck.Code = 200
+				fmt.Printf("查询信息：%+v\n", query)
+				usStatus, err := service.RunVisaStatusCheck(&query)
+				usStatus.Code = 200
 				if err != nil {
-					return
+					fmt.Printf("检查签证状态错误: %v\n", err)
+					continue
 				}
-				fmt.Printf("%+v\n", applicationCheck)
+				changed := tracker.UpdateStatus(query.ApplicationID, usStatus)
+				if changed {
+					fmt.Printf("状态变更：%s, 新状态：%+v\n", query.ApplicationID, usStatus)
+				}
 			}
 		}
 	}()

@@ -12,7 +12,7 @@ import (
 func main() {
 	r := mux.NewRouter()
 	router.RegisterRouters(r)
-	scheduler.Corn()
+	scheduler.RunScheduledTasks()
 
 	log.Println("Server is starting on 0.0.0.0:9010...")
 	log.Fatal(http.ListenAndServe("0.0.0.0:9010", setupCORS(r)))

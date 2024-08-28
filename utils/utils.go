@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 )
 
 func ParseBody(r *http.Request, x interface{}) {
@@ -44,4 +45,30 @@ func (ql *QueryLoader[T]) LoadQueries() ([]T, error) {
 	}
 
 	return queries, nil
+}
+
+// StatusTracker 类定义，使用泛型 T
+type StatusTracker[T comparable] struct {
+	statusMap map[string]T
+	mu        sync.Mutex // 使用互斥锁保证并发安全
+}
+
+// NewStatusTracker 创建一个新的 StatusTracker 实例
+func NewStatusTracker[T comparable]() *StatusTracker[T] {
+	return &StatusTracker[T]{
+		statusMap: make(map[string]T),
+	}
+}
+
+// UpdateStatus 更新给定 ApplicationID 的状态，并返回是否有变化
+func (st *StatusTracker[T]) UpdateStatus(key string, newStatus T) bool {
+	st.mu.Lock()         // 修改map前加
+	defer st.mu.Unlock() // 在方法结束时解锁
+
+	currentStatus, exists := st.statusMap[key]
+	if !exists || currentStatus != newStatus {
+		st.statusMap[key] = newStatus // 更新状态
+		return true                   // 状态改变或者是新的状态
+	}
+	return false // 没有变化
 }
