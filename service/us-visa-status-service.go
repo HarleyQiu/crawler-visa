@@ -21,19 +21,20 @@ import (
 )
 
 const (
-	visaAppTypeSelector = `#Visa_Application_Type`
-	locationDropdown    = `#Location_Dropdown`
-	caseNumberInput     = `#Visa_Case_Number`
-	passportNumberInput = `#Passport_Number`
-	surnameInput        = `#Surname`
-	captchaInput        = `#Captcha`
-	statusTranslation   = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_pTranslation`
-	statusMessage       = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblMessage`
-	statusContent       = `.ceac-status-content`
-	submitDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblSubmitDate`
-	statusDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblStatusDate`
-	captchaImage        = `#c_status_ctl00_contentplaceholder1_defaultcaptcha_CaptchaImage`
-	folderButton        = `#ctl00_ContentPlaceHolder1_imgFolder`
+	visaAppTypeSelector = `#Visa_Application_Type`                                           // 选择非移民签证
+	locationDropdown    = `#Location_Dropdown`                                               // 选择领区
+	caseNumberInput     = `#Visa_Case_Number`                                                // 申请预约AA号
+	passportNumberInput = `#Passport_Number`                                                 // 护照号
+	surnameInput        = `#Surname`                                                         // 姓前5个英文字符
+	captchaInput        = `#Captcha`                                                         // 填写图像验证码
+	statusTranslation   = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_pTranslation`  // 已废弃 状态详细信息抓取
+	statusMessage       = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblMessage`    // 已废弃 状态详细信息抓取
+	status              = ".status"                                                          // 状态抓取
+	statusContent       = `.ceac-status-content`                                             // 状态详细信息抓取
+	submitDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblSubmitDate` // 提交（创建）时间抓取
+	statusDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblStatusDate` // 最后一次更新时间抓取
+	captchaImage        = `#c_status_ctl00_contentplaceholder1_defaultcaptcha_CaptchaImage`  // 抓取图像验证码
+	folderButton        = `#ctl00_ContentPlaceHolder1_imgFolder`                             // 查询提交按钮
 )
 
 func RunVisaStatusCheck(usStatus *models.QueryUsStatus) (models.UsStatus, error) {
@@ -116,7 +117,8 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 		chromedp.SetValue(captchaInput, result.PicStr, chromedp.ByID),
 		chromedp.Click(folderButton, chromedp.ByID),
 		chromedp.WaitVisible(statusContent, chromedp.ByQuery),
-		chromedp.Text(statusContent, &usStatusResult.Status, chromedp.NodeVisible),
+		chromedp.Text(statusContent, &usStatusResult.StatusContent, chromedp.NodeVisible),
+		chromedp.Text(status, &usStatusResult.Status, chromedp.NodeVisible),
 		chromedp.Text(submitDate, &usStatusResult.Created, chromedp.NodeVisible),
 		chromedp.Text(statusDate, &usStatusResult.LastUpdated, chromedp.NodeVisible),
 	); err != nil {
