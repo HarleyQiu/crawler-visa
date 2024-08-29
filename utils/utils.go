@@ -19,17 +19,44 @@ func ParseBody(r *http.Request, x interface{}) {
 	}
 }
 
-// QueryLoader 结构体定义，使用泛型 T
+// QueryLoader 定义了一个泛型结构体，用于从JSON文件中加载数据。
+// 使用泛型 T 允许 QueryLoader 加载任何类型的数据。
 type QueryLoader[T any] struct {
 	FilePath string
 }
 
-// NewQueryLoader 是 QueryLoader 的构造函数，返回一个 QueryLoader 的实例
+// NewQueryLoader 创建并返回一个新的 QueryLoader 实例，初始化文件路径。
+// 参数:
+//
+//	filePath string - 要加载的JSON文件的路径。
+//
+// 返回值:
+//
+//	*QueryLoader[T] - 新创建的 QueryLoader 实例。
 func NewQueryLoader[T any](filePath string) *QueryLoader[T] {
 	return &QueryLoader[T]{FilePath: filePath}
 }
 
-// LoadQueries 从JSON文件加载数据，返回切片类型为 T
+// LoadQueries 从设置的文件路径中加载JSON文件，并将其解析为切片类型为 T 的数据。
+// 返回值包括加载的数据切片和可能发生的错误。
+// 如果文件打开或读取失败，或JSON解析不成功，将返回错误。
+//
+// 返回值:
+//
+//	[]T - 加载并解析的数据。
+//	error - 在加载或解析过程中遇到的错误。
+//
+// 示例:
+//
+//	loader := NewQueryLoader[MyDataType]("path/to/data.json")
+//	data, err := loader.LoadQueries()
+//	if err != nil {
+//	    fmt.Println("加载查询失败:", err)
+//	} else {
+//	    fmt.Println("加载的数据:", data)
+//	}
+//
+// 注意: 此函数未处理特定的JSON格式问题，使用前应确保JSON文件格式与泛型类型T匹配。
 func (ql *QueryLoader[T]) LoadQueries() ([]T, error) {
 	file, err := os.Open(ql.FilePath)
 	if err != nil {
@@ -50,20 +77,45 @@ func (ql *QueryLoader[T]) LoadQueries() ([]T, error) {
 	return queries, nil
 }
 
-// StatusTracker 类定义，使用泛型 T
+// StatusTracker 定义了一个状态跟踪器，使用泛型 T 来存储特定类型的状态。
+// 泛型 T 必须是可比较的，以确保可以检查状态是否发生变化。
 type StatusTracker[T comparable] struct {
-	statusMap map[string]T
-	mu        sync.Mutex // 使用互斥锁保证并发安全
+	statusMap map[string]T // 存储状态的映射，键为 ApplicationID。
+	mu        sync.Mutex   // 使用互斥锁保证并发安全
 }
 
-// NewStatusTracker 创建一个新的 StatusTracker 实例
+// NewStatusTracker 创建并返回一个新的 StatusTracker 实例，初始化状态映射。
+// 返回值:
+//
+//	*StatusTracker[T] - 新创建的 StatusTracker 实例。
 func NewStatusTracker[T comparable]() *StatusTracker[T] {
 	return &StatusTracker[T]{
 		statusMap: make(map[string]T),
 	}
 }
 
-// UpdateStatus 更新给定 ApplicationID 的状态，并返回是否有变化
+// UpdateStatus 试图更新给定 ApplicationID 的状态。
+// 如果指定的 ApplicationID 的当前状态不存在或与新状态不同，则更新状态，并返回 true。
+// 如果当前状态存在且与新状态相同，则不进行更新，返回 false。
+//
+// 参数:
+//
+//	key string - 状态跟踪的 ApplicationID。
+//	newStatus T - 新的状态值。
+//
+// 返回值:
+//
+//	bool - 表示状态是否有变化。
+//
+// 示例:
+//
+//	tracker := NewStatusTracker[int]()
+//	changed := tracker.UpdateStatus("app123", 1)
+//	if changed {
+//	    fmt.Println("状态更新成功")
+//	} else {
+//	    fmt.Println("状态未变化")
+//	}
 func (st *StatusTracker[T]) UpdateStatus(key string, newStatus T) bool {
 	st.mu.Lock()         // 修改map前加
 	defer st.mu.Unlock() // 在方法结束时解锁
@@ -83,13 +135,13 @@ type NotificationSender struct {
 
 // NotificationData 定义了通知所需的数据结构，包括系统类型、消费区域、监控国家等信息。
 type NotificationData struct {
-	Sys        string `json:"sys"`
-	ConsDist   string `json:"consDist"`
-	MonCountry string `json:"monCountry"`
-	ApptTime   string `json:"apptTime"`
-	Status     string `json:"status"`
-	UserName   string `json:"userName"`
-	Remark     string `json:"remark"`
+	Sys        string `json:"sys"`        // 系统标识
+	ConsDist   string `json:"consDist"`   // 领区
+	MonCountry string `json:"monCountry"` // 国家
+	ApptTime   string `json:"apptTime"`   // 预约时间
+	Status     string `json:"status"`     // 状态
+	UserName   string `json:"userName"`   // 用户名
+	Remark     string `json:"remark"`     // 备注
 }
 
 // NewNotificationSender 初始化一个新的 NotificationSender 实例。
