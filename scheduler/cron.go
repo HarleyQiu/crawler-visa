@@ -17,6 +17,7 @@ func RunScheduledTasks() {
 	}
 
 	tracker := utils.NewStatusTracker[models.UsStatus]()
+	sender := utils.NewNotificationSender("https://apis.visa5i.com/wuai/system/wechat-notification/save")
 
 	go func() {
 		ticker := time.NewTicker(1 * time.Minute)
@@ -36,6 +37,21 @@ func RunScheduledTasks() {
 				changed := tracker.UpdateStatus(query.ApplicationID, usStatus)
 				if changed {
 					fmt.Printf("状态变更：%s, 新状态：%+v\n", query.ApplicationID, usStatus)
+					remark := utils.FormatVisaStatus(usStatus.Status, usStatus.StatusContent, usStatus.Created, usStatus.LastUpdated, query.ApplicationID, query.PassportNumber)
+
+					notificationData := utils.NotificationData{
+						Sys:        "美签预约状态查询",
+						ConsDist:   query.Location,
+						MonCountry: "美国",
+						ApptTime:   usStatus.LastUpdated,
+						Status:     "1",
+						UserName:   query.ApplicationID,
+						Remark:     remark,
+					}
+					err := sender.SendNotification(notificationData)
+					if err != nil {
+						fmt.Printf("Error sending notification: %v\n", err)
+					}
 				}
 			}
 		}
