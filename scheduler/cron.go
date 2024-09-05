@@ -20,7 +20,7 @@ func RunScheduledTasks() {
 	sender := utils.NewNotificationSender("https://apis.visa5i.com/wuai/system/wechat-notification/save")
 
 	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
+		ticker := time.NewTicker(1 * time.Hour)
 		defer ticker.Stop()
 
 		for range ticker.C {
