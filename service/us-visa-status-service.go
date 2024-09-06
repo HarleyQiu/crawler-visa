@@ -141,7 +141,7 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 	} else {
 		log.Println("发送成功")
 	}
-	time.Sleep(25 * time.Second)
+	time.Sleep(15 * time.Second)
 
 	c, err := client.DialTLS("imap.163.com:993", nil)
 	if err != nil {
@@ -217,7 +217,7 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 					// 处理内联部分
 					b, _ := ioutil.ReadAll(p.Body)
 					fmt.Println("正文:", string(b))
-					usStatusResult.Status = string(b)
+					usStatusResult.StatusContent = string(b)
 				case *mail.AttachmentHeader:
 					// 忽略附件
 					continue
