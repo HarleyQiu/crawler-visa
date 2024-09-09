@@ -141,7 +141,7 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 	} else {
 		log.Println("发送成功")
 	}
-	time.Sleep(15 * time.Second)
+	time.Sleep(25 * time.Second)
 
 	c, err := client.DialTLS("imap.163.com:993", nil)
 	if err != nil {
@@ -195,7 +195,7 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 			}
 			header := mr.Header
 			if received, err := header.Date(); err == nil {
-				loc, err := time.LoadLocation("Asia/Shanghai")
+				loc, err := time.LoadLocation("Asia/Beijing")
 				if err != nil {
 					fmt.Println("加载时区失败, 使用 UTC 时区:", err)
 					loc = time.UTC
