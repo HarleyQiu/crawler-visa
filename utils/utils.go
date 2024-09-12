@@ -270,6 +270,6 @@ func FormatVisaStatus(status, content, created, lastUpdated, applicationID, pass
 	lastUpdatedAt, _ := time.Parse("02-Jan-2006", lastUpdated)
 
 	// 组织成描述性文本，包括预约号和护照号
-	return fmt.Sprintf("\n签证状态：%s\n创建日期：%s\n最后更新：%s\n详细信息：%s\n预约号：%s\n护照号：%s\n",
+	return fmt.Sprintf("\n\n\n签证状态：%s\n创建日期：%s\n最后更新：%s\n详细信息：%s\n预约号：%s\n护照号：%s\n\n\n",
 		status, createdAt.Format("2006年1月2日"), lastUpdatedAt.Format("2006年1月2日"), content, applicationID, passportNumber)
 }
