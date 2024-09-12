@@ -7,9 +7,9 @@ import (
 
 // ResultData 定义统一的响应结构
 type ResultData struct {
-	Status  bool        `json:"status"`  // 请求是否成功
 	Message string      `json:"message"` // 响应消息
 	Data    interface{} `json:"data"`    // 响应数据
+	Code    int         `json:"code"`
 }
 
 func ResultJSON(w http.ResponseWriter, data interface{}, message string, optionalStatus ...int) {
@@ -29,7 +29,7 @@ func ResultJSON(w http.ResponseWriter, data interface{}, message string, optiona
 	}
 
 	response := ResultData{
-		Status:  status == http.StatusOK,
+		Code:    status,
 		Message: message,
 		Data:    data,
 	}

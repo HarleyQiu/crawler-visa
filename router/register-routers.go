@@ -13,4 +13,5 @@ var RegisterRouters = func(router *mux.Router) {
 	router.HandleFunc("/wuai/system/crawler_visa/cn-us/get", controller.RetrieveApplication).Methods("GET")
 	router.HandleFunc("/wuai/system/crawler_visa/cn-us/update", controller.UpdateApplication).Methods("PUT")
 	router.HandleFunc("/wuai/system/crawler_visa/cn-us/delete", controller.DeleteApplication).Methods("DELETE")
+	router.HandleFunc("/wuai/system/crawler_visa/cn-us/all", controller.RetrieveAllApplications).Methods("GET")
 }

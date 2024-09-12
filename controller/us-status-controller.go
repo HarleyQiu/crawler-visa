@@ -96,3 +96,32 @@ func DeleteApplication(w http.ResponseWriter, r *http.Request) {
 	}
 	utils.ResultJSON(w, nil, "删除成功")
 }
+
+func RetrieveAllApplications(w http.ResponseWriter, r *http.Request) {
+	var applications []models.QueryUsStatus
+
+	iter := redisClient.Scan(ctx, 0, keyPrefix+"*", 0).Iterator()
+	for iter.Next(ctx) {
+		result, err := redisClient.Get(ctx, iter.Val()).Result()
+		if err != nil {
+			utils.ResultError(w, "Error retrieving application: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		application := &models.QueryUsStatus{}
+		err = json.Unmarshal([]byte(result), application)
+		if err != nil {
+			utils.ResultError(w, "Error parsing application data: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		applications = append(applications, *application)
+	}
+	if err := iter.Err(); err != nil {
+		utils.ResultError(w, "Error iterating keys: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if len(applications) == 0 {
+		utils.ResultJSON(w, nil, "No applications found")
+	} else {
+		utils.ResultJSON(w, applications, "Applications retrieved successfully")
+	}
+}
