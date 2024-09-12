@@ -8,4 +8,7 @@ import (
 var RegisterRouters = func(router *mux.Router) {
 	router.HandleFunc("/wuai/system/crawler_visa/us-visa-status", controller.StatusCheck).Methods("POST")
 	router.HandleFunc("/wuai/system/crawler_visa/us-visa-tracking", controller.EmailTracking).Methods("POST")
+
+	router.HandleFunc("/wuai/system/crawler_visa/cn-us/create", controller.CreateApplication).Methods("POST")
+	router.HandleFunc("/wuai/system/crawler_visa/cn-us/create", controller.RetrieveApplication).Methods("POST")
 }
