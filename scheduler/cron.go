@@ -63,6 +63,27 @@ func RunScheduledTasks() {
 					fmt.Printf("Error sending notification: %v\n", err)
 				}
 			}
+			tracking, err := service.RunVisaEmailTracking(&query)
+			tracking.Code = 200
+			if err != nil {
+				fmt.Printf("检查签证状态错误: %v\n", err)
+				continue
+			}
+			remark := utils.FormatPassportStatus(tracking.StatusContent, query.PassportNumber)
+
+			notificationData := utils.NotificationData{
+				Sys:        query.Location,
+				ConsDist:   "美签预约状态查询",
+				MonCountry: "美签预约状态查询",
+				ApptTime:   "美签护照状态查询",
+				Status:     "2",
+				UserName:   query.ApplicationID,
+				Remark:     remark,
+			}
+			err = sender.SendNotification(notificationData)
+			if err != nil {
+				fmt.Printf("Error sending notification: %v\n", err)
+			}
 		}
 	}
 

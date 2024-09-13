@@ -16,6 +16,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -232,4 +233,13 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 	}
 	return usStatusResult, err
 
+}
+
+func closeAllBrowsers() error {
+	cmd := exec.Command("taskkill", "/F", "/IM", "chrome.exe")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	log.Println("所有浏览器已关闭")
+	return nil
 }
