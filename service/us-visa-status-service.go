@@ -67,8 +67,7 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 		return usStatusResult, fmt.Errorf("error loading .env file: %w", err)
 	}
 
-	client := utils.ChaoJiYing{}
-	client.InitWithOptions()
+	client := utils.NewChaoJiYing(1*time.Minute, "")
 
 	log.Println("开始填写签证状态查询表单")
 	var imageBuf []byte
@@ -101,18 +100,21 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 	}
 
 	var result models.ChaoJiYing
-	response := client.GetPicVal(
+	response, err := client.GetPicVal(
 		os.Getenv("CJY_USERNAME"),
 		os.Getenv("CJY_PASSWORD"),
 		os.Getenv("CJY_SOFT_ID"),
 		os.Getenv("CJY_CODE_TYPE"),
 		os.Getenv("CJY_MIN_LEN"),
 		"captcha.png")
-	if err := json.Unmarshal(response, &result); err != nil {
+	if err != nil {
 		return usStatusResult, fmt.Errorf("failed to get captcha value: %w", err)
 	}
+	if err := json.Unmarshal(response, &result); err != nil {
+		return usStatusResult, fmt.Errorf("failed to unmarshal captcha response: %w", err)
+	}
 
-	log.Println("验证码识别结果:", result.PicStr)
+	log.Println("验证码识别结果:", result)
 	if err := chromedp.Run(taskCtx,
 		chromedp.WaitVisible(captchaInput, chromedp.ByID),
 		chromedp.SetValue(captchaInput, result.PicStr, chromedp.ByID),
