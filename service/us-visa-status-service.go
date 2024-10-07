@@ -69,65 +69,86 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 
 	client := utils.NewChaoJiYing(1*time.Minute, "")
 
-	log.Println("开始填写签证状态查询表单")
-	var imageBuf []byte
-	if err := chromedp.Run(taskCtx,
-		chromedp.Navigate("https://ceac.state.gov/CEACStatTracker/Status.aspx"),
-		chromedp.WaitVisible(visaAppTypeSelector, chromedp.ByID),
-		chromedp.SetValue(visaAppTypeSelector, `NIV`, chromedp.ByID),
-		// 领区
-		chromedp.WaitVisible(locationDropdown, chromedp.ByID),
-		chromedp.SetValue(locationDropdown, usStatus.Location, chromedp.ByID),
-		// 申请号
-		chromedp.WaitVisible(caseNumberInput, chromedp.ByID),
-		chromedp.SetValue(caseNumberInput, usStatus.ApplicationID, chromedp.ByID),
-		// 护照号
-		chromedp.WaitVisible(passportNumberInput, chromedp.ByID),
-		chromedp.SetValue(passportNumberInput, usStatus.PassportNumber, chromedp.ByID),
-		// 姓氏首字母 前五个字母
-		chromedp.WaitVisible(surnameInput, chromedp.ByID),
-		chromedp.SetValue(surnameInput, usStatus.First5LettersOfSurname, chromedp.ByID),
-		// 拿到验证码图片
-		chromedp.WaitVisible(captchaImage, chromedp.ByQuery),
-		chromedp.Screenshot(captchaImage, &imageBuf, chromedp.NodeVisible),
-	); err != nil {
-		return usStatusResult, err
-	}
+	maxAttempts := 5
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		log.Printf("开始第 %d 签证状态查询表单", attempt)
+		var imageBuf []byte
+		if err := chromedp.Run(taskCtx,
+			chromedp.Navigate("https://ceac.state.gov/CEACStatTracker/Status.aspx"),
+			chromedp.WaitVisible(visaAppTypeSelector, chromedp.ByID),
+			chromedp.SetValue(visaAppTypeSelector, `NIV`, chromedp.ByID),
+			// 领区
+			chromedp.WaitVisible(locationDropdown, chromedp.ByID),
+			chromedp.SetValue(locationDropdown, usStatus.Location, chromedp.ByID),
+			// 申请号
+			chromedp.WaitVisible(caseNumberInput, chromedp.ByID),
+			chromedp.SetValue(caseNumberInput, usStatus.ApplicationID, chromedp.ByID),
+			// 护照号
+			chromedp.WaitVisible(passportNumberInput, chromedp.ByID),
+			chromedp.SetValue(passportNumberInput, usStatus.PassportNumber, chromedp.ByID),
+			// 姓氏首字母 前五个字母
+			chromedp.WaitVisible(surnameInput, chromedp.ByID),
+			chromedp.SetValue(surnameInput, usStatus.First5LettersOfSurname, chromedp.ByID),
+			// 拿到验证码图片
+			chromedp.WaitVisible(captchaImage, chromedp.ByQuery),
+			chromedp.Screenshot(captchaImage, &imageBuf, chromedp.NodeVisible),
+		); err != nil {
+			return usStatusResult, err
+		}
 
-	log.Println("开始识别验证码")
-	if err := ioutil.WriteFile("captcha.png", imageBuf, 0644); err != nil {
-		return usStatusResult, err
-	}
+		log.Println("开始识别验证码")
+		if err := ioutil.WriteFile("captcha.png", imageBuf, 0644); err != nil {
+			return usStatusResult, err
+		}
 
-	var result models.ChaoJiYing
-	response, err := client.GetPicVal(
-		os.Getenv("CJY_USERNAME"),
-		os.Getenv("CJY_PASSWORD"),
-		os.Getenv("CJY_SOFT_ID"),
-		os.Getenv("CJY_CODE_TYPE"),
-		os.Getenv("CJY_MIN_LEN"),
-		"captcha.png")
-	if err != nil {
-		return usStatusResult, fmt.Errorf("failed to get captcha value: %w", err)
-	}
-	if err := json.Unmarshal(response, &result); err != nil {
-		return usStatusResult, fmt.Errorf("failed to unmarshal captcha response: %w", err)
-	}
+		var result models.ChaoJiYing
+		response, err := client.GetPicVal(
+			os.Getenv("CJY_USERNAME"),
+			os.Getenv("CJY_PASSWORD"),
+			os.Getenv("CJY_SOFT_ID"),
+			os.Getenv("CJY_CODE_TYPE"),
+			os.Getenv("CJY_MIN_LEN"),
+			"captcha.png")
+		if err != nil {
+			log.Printf("第 %d 次验证码识别失败: %v", attempt, err)
+			continue // 识别失败，重新尝试
+		}
+		if err := json.Unmarshal(response, &result); err != nil {
+			log.Printf("第 %d 次验证码响应解析失败: %v", attempt, err)
+			continue // 解析失败，重新尝试
+		}
+		log.Println("验证码识别结果:", result)
 
-	log.Println("验证码识别结果:", result)
-	if err := chromedp.Run(taskCtx,
-		chromedp.WaitVisible(captchaInput, chromedp.ByID),
-		chromedp.SetValue(captchaInput, result.PicStr, chromedp.ByID),
-		chromedp.Click(folderButton, chromedp.ByID),
-		chromedp.WaitVisible(statusContent, chromedp.ByQuery),
-		chromedp.Text(statusContent, &usStatusResult.StatusContent, chromedp.NodeVisible),
-		chromedp.Text(status, &usStatusResult.Status, chromedp.NodeVisible),
-		chromedp.Text(submitDate, &usStatusResult.Created, chromedp.NodeVisible),
-		chromedp.Text(statusDate, &usStatusResult.LastUpdated, chromedp.NodeVisible),
-	); err != nil {
-		return usStatusResult, err
+		if err := chromedp.Run(taskCtx,
+			chromedp.WaitVisible(captchaInput, chromedp.ByID),
+			chromedp.SetValue(captchaInput, result.PicStr, chromedp.ByID),
+			chromedp.Click(folderButton, chromedp.ByID),
+			chromedp.Sleep(2*time.Second), // 等待验证码提交后的响应
+			chromedp.Evaluate(`document.getElementById('ctl00_ContentPlaceHolder1_lblError')?.textContent`, &usStatusResult.StatusContent),
+		); err != nil {
+			log.Printf("第 %d 次提交验证码失败: %v", attempt, err)
+			continue // 提交失败，重新尝试
+		}
+		if strings.TrimSpace(usStatusResult.StatusContent) != "" {
+			log.Printf("第 %d 次验证码提交失败，错误信息: %s", attempt, usStatusResult.StatusContent)
+			continue // 验证码提交失败，重新尝试
+		}
+
+		if err := chromedp.Run(taskCtx,
+			chromedp.WaitVisible(statusContent, chromedp.ByQuery),
+			chromedp.Text(statusContent, &usStatusResult.StatusContent, chromedp.NodeVisible),
+			chromedp.Text(status, &usStatusResult.Status, chromedp.NodeVisible),
+			chromedp.Text(submitDate, &usStatusResult.Created, chromedp.NodeVisible),
+			chromedp.Text(statusDate, &usStatusResult.LastUpdated, chromedp.NodeVisible),
+		); err != nil {
+			log.Printf("第 %d 次获取签证状态信息失败: %v", attempt, err)
+			continue // 获取状态信息失败，重新尝试
+		}
+
+		return usStatusResult, nil
+
 	}
-	return usStatusResult, nil
+	return usStatusResult, fmt.Errorf("验证码识别失败超过最大尝试次数 %d 次", maxAttempts)
 }
 
 func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, error) {

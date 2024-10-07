@@ -95,7 +95,7 @@ func getEncodedBase64(filename string) (string, error) {
 	return encoded, nil
 }
 
-// 发出请求获得json结果
+// GetPicVal 发出请求获得json结果
 func (client *ChaoJiYing) GetPicVal(user, pass, softid, codetype, len_min, filename string) ([]byte, error) {
 	urlString := "http://upload.chaojiying.net/Upload/Processing.php"
 
