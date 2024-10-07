@@ -35,6 +35,7 @@ const (
 	submitDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblSubmitDate` // 提交（创建）时间抓取
 	statusDate          = `#ctl00_ContentPlaceHolder1_ucApplicationStatusView_lblStatusDate` // 最后一次更新时间抓取
 	captchaImage        = `#c_status_ctl00_contentplaceholder1_defaultcaptcha_CaptchaImage`  // 抓取图像验证码
+	captchaError        = `#ctl00_ContentPlaceHolder1_lblError`                              // 图像验证码提交错误后的报错信息
 	folderButton        = `#ctl00_ContentPlaceHolder1_imgFolder`                             // 查询提交按钮
 )
 
@@ -69,7 +70,7 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 
 	client := utils.NewChaoJiYing(1*time.Minute, "")
 
-	maxAttempts := 5
+	maxAttempts := 3
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		log.Printf("开始第 %d 签证状态查询表单", attempt)
 		var imageBuf []byte
@@ -124,7 +125,7 @@ func performVisaStatusCheck(taskCtx context.Context, usStatus *models.QueryUsSta
 			chromedp.SetValue(captchaInput, result.PicStr, chromedp.ByID),
 			chromedp.Click(folderButton, chromedp.ByID),
 			chromedp.Sleep(2*time.Second), // 等待验证码提交后的响应
-			chromedp.Evaluate(`document.getElementById('ctl00_ContentPlaceHolder1_lblError')?.textContent`, &usStatusResult.StatusContent),
+			chromedp.Text(captchaError, &usStatusResult.StatusContent, chromedp.ByID),
 		); err != nil {
 			log.Printf("第 %d 次提交验证码失败: %v", attempt, err)
 			continue // 提交失败，重新尝试
@@ -258,7 +259,7 @@ func RunVisaEmailTracking(usStatus *models.QueryUsStatus) (models.UsStatus, erro
 
 }
 
-func closeAllBrowsers() error {
+func CloseAllBrowsers() error {
 	cmd := exec.Command("taskkill", "/F", "/IM", "chrome.exe")
 	if err := cmd.Run(); err != nil {
 		return err
